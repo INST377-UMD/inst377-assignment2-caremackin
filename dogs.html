@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<link rel="stylesheet" href="styling.css">
+<nav>
+        <p><a href="home.html">Home</a></p>
+        <p><a href="stocks.html">Stocks</a></p>
+        <p><a href="dogs.html">Dogs</a></p>
+    </div>
+    
+</nav>
+<body  onload="loadDogs()">
+    <div>
+        <h2>Dogs</h2>
+    </div>
+
+    <div id = "dogslider" #dogslider style="width:612px; height:612px" data-simple-slider> </div>
+    <div id = "btndiv"></div>
+    <div id="doggyfacts">
+        <p id = "NameContent"></p>
+        <p id = "DescriptionContent"></p>
+        <p id = "MinContent"></p>
+        <p id = "MaxContent"></p>
+    </div>
+
+    <div class="audio">
+        <h2>Voice Commands:</h2>
+        <ul>
+            <li>Hello World Alert:</li>
+            <ul>
+                <li>Say "Hello"</li>
+            </ul>
+            <li>Change background color:</li>
+            <ul>
+                <li>Say "Change the color to [color]."</li>
+            </ul>
+            <li>Navigate to another page:</li>
+            <ul>
+                <li>Say "Navigate to [page]"</li>
+            </ul>
+            <li>Get Dog Breed Info:</li>
+            <ul>
+                <li>Say "Load Dog Breed [Dog Breed Name]"</li>
+            </ul>
+        </ul>
+        <button class ="onButton" onclick="annyang.start()">Turn On Audio</button>
+        <button class ="offButton" onclick="annyang.abort()">Turn Off Audio</button>
+      </div>
+</body>
+<footer>
+</footer>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/simple-slider/1.0.0/simpleslider.min.js"></script>
+
+<script>
+
+
+
+async function loadDogs() {
+    const dogPics = document.getElementById('dogslider');
+
+    for (let i = 0; i < 10; i++) {
+        const response = await fetch('https://dog.ceo/api/breeds/image/random');
+        const data = await response.json();
+        if (data) {
+            const img = document.createElement('img');
+            img.src = data.message;
+            img.width = 612;
+            img.height = 612;
+            dogPics.appendChild(img);
+            console.log(data);
+        }
+    }
+    simpleslider.getSlider();
+     
+    const dogbtns = document.getElementById('btndiv');
+
+    fetch('https://dogapi.dog/api/v2/breeds')
+    .then((resp) => resp.json())
+    .then((data) => {
+        console.log(data);
+        const breeds = data.data;
+        for (let i = 0; i < breeds.length; i++) {
+        const breed = breeds[i]; 
+        const btn = document.createElement('button');
+        btn.setAttribute("class", "breedbtn");
+        btn.textContent = breed.attributes.name;
+        btn.addEventListener("click", () =>{
+            fetch(`https://dogapi.dog/api/v2/breeds/${breed.id}`)
+            .then((resp) => resp.json())
+            .then((data) => {
+                console.log(data)
+                document.getElementById('doggyfacts').style.border = '1px solid black';
+                document.getElementById('NameContent').textContent = data.data.attributes.name
+                document.getElementById('DescriptionContent').textContent = data.data.attributes.description
+                document.getElementById('MinContent').textContent = "Min Lifespan:" + data.data.attributes.life.min
+                document.getElementById('MaxContent').textContent = "Max Lifespan:" + data.data.attributes.life.max
+            })
+        })
+        dogbtns.appendChild(btn);
+        }
+    });
+}
+
+function loadDogInfo(breed){
+    fetch('https://dogapi.dog/api/v2/breeds')
+    .then((resp) => resp.json())
+    .then((data) => {
+        const breedInfo = data.data.find((dog) => dog.attributes.name.toLowerCase() === breed.toLowerCase());
+        console.log(breedInfo);
+        document.getElementById('doggyfacts').style.border = '1px solid black';
+        document.getElementById('NameContent').textContent = breedInfo.attributes.name
+        document.getElementById('DescriptionContent').textContent = breedInfo.attributes.description
+        document.getElementById('MinContent').textContent = "Min Lifespan:" + breedInfo.attributes.life.min
+        document.getElementById('MaxContent').textContent = "Max Lifespan:" + breedInfo.attributes.life.max
+    })
+}
+
+
+if (annyang) {
+  const commands = {
+    'hello': () => { alert('Hello world!'); },
+    'change the color to *color': changeBackground,
+    'navigate to *page': navigate,
+    'load dog breed *breed': loadDogInfo
+  };
+
+  annyang.addCommands(commands);
+  annyang.start();
+}
+
+function changeBackground(color) {
+    document.body.style.backgroundColor = color;
+  }
+
+  function navigate(page) {
+    if (page === 'home'){
+        window.location.href = 'home.html'
+    }
+    if (page === 'stocks'){
+        window.location.href = 'stocks.html'
+    }
+    if (page === 'dogs'){
+        window.location.href = 'dogs.html'
+    }
+}
+</script>
