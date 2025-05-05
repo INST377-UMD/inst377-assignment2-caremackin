@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<link rel="stylesheet" href="styling.css">
+<nav>
+        <p><a href="home.html">Home</a></p>
+        <p><a href="stocks.html">Stocks</a></p>
+        <p><a href="dogs.html">Dogs</a></p>
+    </div>
+    
+</nav>
+<body  onload="makeStockTable()">
+    <div>
+        <h2>Stocks</h2>
+    </div>
+    <form id="stockForm">
+        <div class="formdiv">
+            <label for="stock">Stock:</label>
+            <input class="stock" type="stock" id="stock" name="stock" required>
+            <label for="days">Days:</label>
+            <select id="days" name="days">
+                <option value="30">30 Days</option>
+                <option value="60">60 Days</option>
+                <option value="90">90 Days</option>
+              </select>
+            <span id="concern-error" class="error-message"></span>
+            <button class="btn" type="submit" value="Submit">Look Up</button>
+        </div>
+      </form>
+
+      <div>
+        <canvas id="myChart"></canvas>
+      </div>
+
+      <table id="stocktable" #stocktable>
+        <tr>
+            <th id="Ticket"></th>
+            <th id="Comment_Count"></th>
+            <th id="Sentiment"></th>
+          </tr>
+    </table>
+
+
+    <div class="audio">
+        <h2>Voice Commands:</h2>
+        <ul>
+            <ul>
+                <li>Hello World Alert:</li>
+                <ul>
+                    <li>Say "Hello"</li>
+                </ul>
+                <li>Change background color:</li>
+                <ul>
+                    <li>Say "Change the color to [color]."</li>
+                </ul>
+                <li>Navigate to another page:</li>
+                <ul>
+                    <li>Say "Navigate to [page]"</li>
+                </ul>
+                <li>Lookup stock close data for past 30 days:</li>
+                <ul>
+                    <li>Say "Lookup [Stock]."</li>
+                </ul>
+              </ul>
+        </ul>
+        <button class ="onButton" onclick="annyang.start()">Turn On Audio</button>
+        <button class ="offButton" onclick="annyang.abort()">Turn Off Audio</button>
+      </div>
+</body>
+<footer>
+</footer>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+let today = new Date().toISOString().slice(0, 10)
+
+
+function makeStockTable(){
+    fetch(`https://tradestie.com/api/v1/apps/reddit?date=2022-04-03`)
+            .then((resp) => resp.json())
+            .then((data) => {
+                top_stocks = data.slice(0,5)
+                console.log(top_stocks)
+                fillTable(top_stocks)
+            });
+}
+
+function fillTable(data){
+            tbl = document.getElementById('stocktable');
+            for (let i = tbl.rows.length - 1; i > 0; i--) {
+                tbl.deleteRow(i);
+            }
+            tbl.style.width = '500px';
+            tbl.style.border = '1px solid black';
+            document.getElementById("Ticket").textContent = "Ticket";
+            document.getElementById("Comment_Count").textContent = "Comment Count";
+            document.getElementById("Sentiment").textContent = "Sentiment";
+            for (let i = 0; i < data.length + 1; i++) {
+                const tr = tbl.insertRow();
+                const td1 = tr.insertCell();
+                td1.textContent = data[i].ticker
+                const td2 = tr.insertCell();
+                td2.textContent = data[i].no_of_comments
+                const td3 = tr.insertCell();
+                
+                const sentiment = data[i].sentiment.toLowerCase();
+                if (sentiment === "bearish") {
+                    const bear_pic = document.createElement('img');
+                    bear_pic.src = "bear.jpg";
+                    bear_pic.height = 60;
+                    td3.appendChild(bear_pic);
+                } else if (sentiment === "bullish") {
+                    const bull_pic = document.createElement('img');
+                    bull_pic.src = "bull.jpeg";
+                    bull_pic.height = 60;
+                    td3.appendChild(bull_pic);
+                } else {
+                    td3.textContent = sentiment; 
+                }
+
+            }
+        }
+
+function getStockClose(stock, startDate, endDate ,day_labels, close_data) {
+            day_labels = []
+            close_data = []
+            fetch(`https://api.polygon.io/v2/aggs/ticker/${stock}/range/1/day/${startDate}/${endDate}?adjusted=true&sort=asc&limit=120&apiKey=${"2vsvm_YspSTVzDte3SoaXhftvuj7ZzVP"}`)
+            .then((resp) => resp.json())
+            .then((data) => {
+                console.log(data)
+                if(data.resultsCount === 0){
+                    alert(`Invalid stock ${stock}`)
+                } else {
+                    for (let i = 0; i < data.results.length; i++) {
+                    var epoch = data.results[i].t;
+                    var date = new Date(epoch); 
+                    day_labels.push(date.toISOString().slice(0, 10))
+                    close_data.push(data.results[i].c)
+                }
+                const ctx = document.getElementById('myChart');
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                    labels: day_labels,
+                    datasets: [{
+                        label: 'Close Price',
+                        data: close_data,
+                        borderWidth: 1
+                    }]
+                    },
+                    options: {
+                    scales: {
+                        y: {
+                        beginAtZero: true
+                        }
+                    }
+                }
+                });
+                }
+              
+
+              });
+
+        }
+
+document.getElementById("stockForm").addEventListener("submit", function(event) {
+    event.preventDefault(); 
+    stock = document.getElementById("stock").value;
+    days = Number(document.getElementById("days").value);
+    getStockClose(stock, daysAgo(days),today);
+});
+
+function daysAgo(daysAgo) {
+  let date = new Date();
+  date.setDate(date.getDate() - Math.abs(daysAgo));
+  past_date = date.toISOString().slice(0, 10)
+  return past_date;
+};
+
+
+if (annyang) {
+  const commands = {
+    'hello': () => { alert('Hello world!'); },
+    'change the color to *color': changeBackground,
+    'navigate to *page': navigate,
+    'lookup *stock': lookUp
+  };
+  annyang.addCommands(commands);
+  annyang.start();
+}
+
+function lookUp(stock){
+    getStockClose(stock, daysAgo(30), today)
+}
+
+function changeBackground(color) {
+    document.body.style.backgroundColor = color;
+  }
+
+  function navigate(page) {
+    if (page === 'home'){
+        window.location.href = 'home.html'
+    }
+    if (page === 'stocks'){
+        window.location.href = 'stocks.html'
+    }
+    if (page === 'dogs'){
+        window.location.href = 'dogs.html'
+    }
+}
+</script>

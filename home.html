@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<link rel="stylesheet" href="styling.css">
+<nav>
+        <p><a href="home.html">Home</a></p>
+        <p><a href="stocks.html">Stocks</a></p>
+        <p><a href="dogs.html">Dogs</a></p>
+    </div>
+    
+</nav>
+<body onload="randomQuote()">
+    <div>
+        <h2>Home</h2>
+    </div>
+    <h3 id="quote"></h3>
+    <a href="stocks.html">
+    <button>
+        Stocks
+    </button>
+    </a>
+    <a href="dogs.html">
+    <button>
+        Dogs
+    </button>
+    </a>
+    <div class="audio">
+        <h2>Voice Commands:</h2>
+        <ul>
+            <ul>
+                <li>Hello World Alert:</li>
+                <ul>
+                    <li>Say "Hello"</li>
+                </ul>
+                <li>Change background color:</li>
+                <ul>
+                    <li>Say "Change the color to [color]."</li>
+                </ul>
+                <li>Navigate to another page:</li>
+                <ul>
+                    <li>Say "Navigate to [page]"</li>
+                </ul>
+              </ul>
+        </ul>
+        <button class ="onButton" onclick="annyang.start()">Turn On Audio</button>
+        <button class ="offButton" onclick="annyang.abort()">Turn Off Audio</button>
+      </div>
+</body>
+<footer>
+</footer>
+<script src="//cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+<script>
+if (annyang) {
+  const commands = {
+    'hello': () => { alert('Hello world!'); },
+    'change the color to *color': changeBackground,
+    'navigate to *page': navigate
+  };
+
+  annyang.addCommands(commands);
+  annyang.start();
+}
+
+function randomQuote(){
+    fetch(`https://zenquotes.io/api/random`)
+            .then((resp) => resp.json())
+            .then((data) => {
+                console.log(data)
+                document.getElementById("quote").textContent = data[0].q
+            })
+  
+}
+
+function changeBackground(color) {
+    document.body.style.backgroundColor = color;
+  }
+
+  function navigate(page) {
+    if (page === 'home'){
+        window.location.href = 'home.html'
+    }
+    if (page === 'stocks'){
+        window.location.href = 'stocks.html'
+    }
+    if (page === 'dogs'){
+        window.location.href = 'dogs.html'
+    }
+}
+</script>
